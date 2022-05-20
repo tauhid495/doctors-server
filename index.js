@@ -1,29 +1,21 @@
 const express = require('express');
-const app = express();
 const cors = require('cors');
-const nodemailer = require('nodemailer');
-const sgTransport = require('nodemailer-sendgrid-transport');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+var nodemailer = require('nodemailer');
+var sgTransport = require('nodemailer-sendgrid-transport');
+
+const app = express();
 const port = process.env.PORT || 5000;
 
-// DB_USER=doctorsPortal
-// DB_PASS=tauhid1984
-
-
-// middle were
 app.use(cors());
 app.use(express.json());
-
-
-// api start
 
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.tqwop.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`;
 
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
-
 
 
 function verifyJWT(req, res, next) {
@@ -43,11 +35,11 @@ function verifyJWT(req, res, next) {
 
 const emailSenderOptions = {
   auth: {
-    api_key: process.env.EMAIL_SENDER_KEY
+    api_key: process.env.EMAIL_SENDER
   }
 }
 
-// const emailClient = nodemailer.createTransport(sgTransport(emailSenderOptions));
+const emailClient = nodemailer.createTransport(sgTransport(emailSenderOptions));
 
 function sendAppointmentEmail(booking){
   const {patient, patientName, treatment, date, slot} = booking;
@@ -193,6 +185,13 @@ async function run() {
       else {
         return res.status(403).send({ message: 'forbidden access' });
       }
+    })
+
+    app.get('/booking/:id', async(req,res)=>{
+      const id=req.params.id;
+      const query={_id: ObjectId(id)};
+      const booking=await bookingCollection.findOne(query);
+      res.send(booking);
     })
 
     app.post('/booking', async (req, res) => {
